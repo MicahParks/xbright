@@ -29,7 +29,7 @@ func main() {
 		slider,
 	)
 	a := app.New()
-	w := a.NewWindow("Hello")
+	w := a.NewWindow("fyne brightness controller")
 	w.SetContent(box)
 	w.Resize(fyne.NewSize(500, 200))
 	w.ShowAndRun()
