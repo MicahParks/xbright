@@ -9,6 +9,7 @@ import (
 	"strconv"
 )
 
+var noBright = errors.New("xrandr isn't reporting connected diplay's brightness")
 var noDisplays = errors.New("no connected displays found in xrandr --query")
 var notDisplay = errors.New("given string is not a connected display")
 
@@ -21,12 +22,13 @@ func main() {
 	if err := x.new(); err != nil {
 		panic(err)
 	}
-	for _, display := range x.displays {
-		println(display)
+	for k, v := range x.displays {
+		println(k, v)
 	}
 }
 
 func (x *xrandr) getDisplays() error {
+	x.displays = make(map[string]float64)
 	cmd := exec.Command("xrandr", "--verbose", "--query")
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -54,7 +56,7 @@ func (x *xrandr) getDisplays() error {
 	re = regexp.MustCompile(`Brightness.*`)
 	bBrightnesses := re.FindAll(out, -1)
 	if bBrightnesses == nil {
-		// TODO Error
+		return noBright
 	}
 	brightnesses := make([]float64, 0)
 	for _, bBrightness := range bBrightnesses {
@@ -66,7 +68,7 @@ func (x *xrandr) getDisplays() error {
 		brightnesses = append(brightnesses, float)
 	}
 	if len(brightnesses) != len(displays) {
-		// TODO Error
+		return noBright
 	}
 	for i, display := range displays {
 		x.displays[display] = brightnesses[i]
@@ -85,17 +87,17 @@ func (x *xrandr) new() error {
 	return nil
 }
 
-func (x *xrandr) setBrightness(set string, val float64) error {
-	good := false
-	for _, display := range x.displays {
-		if display == set {
-			good = true
-			break
-		}
-	}
-	if !good {
-		return notDisplay
-	}
-
-	return nil
-}
+//func (x *xrandr) setBrightness(set string, val float64) error {
+//	good := false
+//	for _, display := range x.displays {
+//		if display == set {
+//			good = true
+//			break
+//		}
+//	}
+//	if !good {
+//		return notDisplay
+//	}
+//
+//	return nil
+//}
