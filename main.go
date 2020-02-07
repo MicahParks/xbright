@@ -23,11 +23,13 @@ func main() {
 	slider.Step = 1
 	slider.Value = 100
 	slider.OnChanged = sC.sliderChange
+	box := widget.NewVBox(
+		slider,
+	)
+	box.MinSize()
 	app := app.New()
 	w := app.NewWindow("Hello")
-	w.SetContent(widget.NewVBox(
-		slider,
-	))
+	w.SetContent(box)
 	w.ShowAndRun()
 }
 
