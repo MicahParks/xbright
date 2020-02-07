@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"log"
 	"os"
+	"time"
 
 	"fyne.io/fyne"
 	"fyne.io/fyne/app"
@@ -18,7 +19,7 @@ type sChange struct {
 
 func main() {
 	x := xrandr{}
-	if err := x.new(); err != nil {
+	if err := x.new(time.Second / 100); err != nil {
 		panic(err)
 	}
 	l := log.New(&bytes.Buffer{}, "", log.LUTC)
@@ -39,6 +40,7 @@ func main() {
 	w.SetContent(box)
 	w.Resize(fyne.NewSize(500, 200))
 	w.ShowAndRun()
+	close(x.death)
 }
 
 func (s *sChange) sliderChange(val float64) {
@@ -46,8 +48,6 @@ func (s *sChange) sliderChange(val float64) {
 		s.prev = val
 		s.l.Println(val)
 		val = val / 100
-		if err := s.x.setBrightness("DP-1", val); err != nil {
-			panic(err)
-		}
+		s.x.setBrightness("DP-1", val)
 	}
 }

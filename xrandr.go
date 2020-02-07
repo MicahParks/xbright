@@ -8,6 +8,8 @@ import (
 	"os/exec"
 	"regexp"
 	"strconv"
+	"sync"
+	"time"
 )
 
 var noBright = errors.New("xrandr isn't reporting connected diplay's brightness")
@@ -16,7 +18,11 @@ var notDisplay = errors.New("given string is not a connected display")
 var tooBright = errors.New("trying to set value to over 100% brightness")
 
 type xrandr struct {
+	death    chan struct{}
 	displays map[string]float64
+	muxQ     *sync.Mutex
+	queued   map[string]float64
+	wait     time.Duration
 }
 
 func brights(expected int, out []byte) ([]float64, error) {
@@ -90,13 +96,40 @@ func query() ([]byte, error) {
 }
 
 func xrandrBright(display string, bright float64) error {
-	b := fmt.Sprintf("%.2f", bright)
-	println(b)
-	cmd := exec.Command("xrandr", "--output", display, "--brightness", b)
+	cmd := exec.Command("xrandr", "--output", display, "--brightness", fmt.Sprintf("%.2f", bright))
 	if err := cmd.Run(); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (x *xrandr) brightLoop() {
+	for {
+		select {
+		case <-x.death:
+			return
+		case <-time.After(x.wait):
+			x.muxQ.Lock()
+			for k, v := range x.queued {
+				if v > 1 {
+					panic(tooBright)
+				}
+				m, err := buildMap()
+				if err != nil {
+					panic(err)
+				}
+				if _, ok := m[k]; !ok {
+					panic(notDisplay)
+				}
+				m[k] = v
+				if err = x.refresh(m); err != nil {
+					panic(err)
+				}
+			}
+			x.queued = make(map[string]float64)
+			x.muxQ.Unlock()
+		}
+	}
 }
 
 func (x *xrandr) loadDisplays() error {
@@ -108,7 +141,10 @@ func (x *xrandr) loadDisplays() error {
 	return nil
 }
 
-func (x *xrandr) new() error {
+func (x *xrandr) new(wait time.Duration) error {
+	x.muxQ = &sync.Mutex{}
+	x.wait = wait
+	x.queued = make(map[string]float64)
 	if _, err := exec.LookPath("xrandr"); err != nil {
 		return err
 	}
@@ -116,6 +152,7 @@ func (x *xrandr) new() error {
 	if err != nil {
 		return err
 	}
+	go x.brightLoop()
 	return nil
 }
 
@@ -139,17 +176,8 @@ func (x *xrandr) refresh(m map[string]float64) error {
 	return nil
 }
 
-func (x *xrandr) setBrightness(set string, val float64) error {
-	if val > 1 {
-		return tooBright
-	}
-	m, err := buildMap()
-	if err != nil {
-		return err
-	}
-	if _, ok := m[set]; !ok {
-		return notDisplay
-	}
-	m[set] = val
-	return x.refresh(m)
+func (x *xrandr) setBrightness(set string, val float64) {
+	x.muxQ.Lock()
+	x.queued[set] = val
+	x.muxQ.Unlock()
 }
