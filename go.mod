@@ -1,4 +1,4 @@
-module gitlab.com/MicahParks/fyne-brightness-controller
+module gitlab.com/MicahParks/fbc
 
 go 1.13
 

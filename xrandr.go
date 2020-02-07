@@ -13,6 +13,7 @@ import (
 var noBright = errors.New("xrandr isn't reporting connected diplay's brightness")
 var noDisplays = errors.New("no connected displays found in xrandr --query")
 var notDisplay = errors.New("given string is not a connected display")
+var tooBright = errors.New("trying to set value to over 100% brightness")
 
 type xrandr struct {
 	displays map[string]float64
@@ -67,19 +68,6 @@ func displays(out []byte) ([]string, error) {
 		d = append(d, string(bytes.Split(bDisplay, []byte(" "))[0]))
 	}
 	return d, nil
-}
-
-func main() {
-	x := xrandr{}
-	if err := x.new(); err != nil {
-		panic(err)
-	}
-	for k, v := range x.displays {
-		println(k, v)
-	}
-	if err := x.setBrightness("DVI-I-1", 1); err != nil {
-		panic(err)
-	}
 }
 
 func query() ([]byte, error) {
@@ -152,6 +140,9 @@ func (x *xrandr) refresh(m map[string]float64) error {
 }
 
 func (x *xrandr) setBrightness(set string, val float64) error {
+	if val > 1 {
+		return tooBright
+	}
 	m, err := buildMap()
 	if err != nil {
 		return err
