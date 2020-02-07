@@ -5,12 +5,14 @@ import (
 	"log"
 	"os"
 
+	"fyne.io/fyne"
 	"fyne.io/fyne/app"
 	"fyne.io/fyne/widget"
 )
 
 type sChange struct {
-	l *log.Logger
+	l    *log.Logger
+	prev float64
 }
 
 func main() {
@@ -26,13 +28,16 @@ func main() {
 	box := widget.NewVBox(
 		slider,
 	)
-	box.MinSize()
-	app := app.New()
-	w := app.NewWindow("Hello")
+	a := app.New()
+	w := a.NewWindow("Hello")
 	w.SetContent(box)
+	w.Resize(fyne.NewSize(500, 200))
 	w.ShowAndRun()
 }
 
 func (s *sChange) sliderChange(val float64) {
-	s.l.Println(val)
+	if val != s.prev {
+		s.prev = val
+		s.l.Println(val)
+	}
 }
