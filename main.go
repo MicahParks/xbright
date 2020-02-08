@@ -52,7 +52,7 @@ func main() {
 	l := log.New(&bytes.Buffer{}, "", log.LUTC)
 	l.SetOutput(os.Stderr)
 	a := app.New()
-	w := a.NewWindow("brightness")
+	w := a.NewWindow("xBright")
 	w.SetContent(makeSliders(l, &x))
 	w.Resize(fyne.NewSize(400, 1))
 	w.ShowAndRun()
