@@ -76,7 +76,7 @@ func main() {
 	s := settings{Path: defaultPath}
 	if err := s.fromJson(); err != nil {
 		s.Path = defaultPath
-		s.Preset1 = x.displays
+		s.DefaultPreset = x.displays
 		s.Preset2 = make(map[string]float64)
 		s.Preset3 = make(map[string]float64)
 		s.Refresh = time.Millisecond * 5
@@ -84,12 +84,12 @@ func main() {
 			l.Fatalln(err.Error() + fmt.Sprintf("\ncouldn't make settings file at %s", s.Path))
 		}
 	}
-	if err := x.refresh(s.Preset1); err != nil {
+	if err := x.refresh(s.DefaultPreset); err != nil {
 		// Monitor from settings is missing.
 	} else {
 		for _, sC := range sCs {
-			if s.Preset1[sC.name] != sC.prev/100 {
-				newVal := s.Preset1[sC.name] * 100
+			if s.DefaultPreset[sC.name] != sC.prev/100 {
+				newVal := s.DefaultPreset[sC.name] * 100
 				sC.onChanged(newVal)
 				sC.slider.Value = newVal
 			}
