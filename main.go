@@ -9,6 +9,7 @@ import (
 
 	"fyne.io/fyne"
 	"fyne.io/fyne/app"
+	"fyne.io/fyne/layout"
 	"fyne.io/fyne/widget"
 )
 
@@ -20,8 +21,8 @@ type slideC struct {
 	x       *xrandr
 }
 
-func makeSliders(l *log.Logger, x *xrandr) []*widget.Box {
-	boxes := make([]*widget.Box, 0)
+func makeSliders(l *log.Logger, x *xrandr) *fyne.Container {
+	cons := make([]*fyne.Container, 0)
 	for k, v := range x.displays {
 		percent := widget.NewLabelWithStyle(fmt.Sprintf("%.f", v*100)+"%", fyne.TextAlignCenter, fyne.TextStyle{Monospace: true})
 		sC := &slideC{
@@ -36,28 +37,37 @@ func makeSliders(l *log.Logger, x *xrandr) []*widget.Box {
 		sW.Value = v * 100
 		sW.OnChanged = sC.onChanged
 		lW := widget.NewLabelWithStyle(k, fyne.TextAlignCenter, fyne.TextStyle{Monospace: true})
-		box := widget.NewHBox(lW, sW, percent)
-		boxes = append(boxes, box)
+		c := fyne.NewContainerWithLayout(layout.NewGridLayout(3))
+		c.AddObject(lW)
+		c.AddObject(sW)
+		c.AddObject(percent)
+		cons = append(cons, c)
 	}
-	return boxes
+	con := fyne.NewContainerWithLayout(layout.NewGridLayout(1))
+	for _, b := range cons {
+		con.AddObject(b)
+	}
+	return con
 }
 
 func main() {
 	x := xrandr{}
-	if err := x.new(time.Second / 100); err != nil {
+	if err := x.new(time.Millisecond * 5); err != nil {
 		panic(err)
 	}
 	l := log.New(&bytes.Buffer{}, "", log.LUTC)
 	l.SetOutput(os.Stderr)
 	boxes := makeSliders(l, &x)
-	box := widget.NewVBox()
+	//box := widget.NewVBox(boxes)
+	//box.Resize(fyne.NewSize(500, 200))
 	a := app.New()
 	w := a.NewWindow("fyne brightness controller")
-	w.SetContent(box)
+	w.SetContent(boxes)
 	w.Resize(fyne.NewSize(500, 200))
-	for _, b := range boxes {
-		box.Append(b)
-	}
+	//for _, b := range boxes {
+	//	box.Append(b)
+	//	box.Resize(fyne.NewSize(500, 100))
+	//}
 	w.ShowAndRun()
 	close(x.death)
 }
