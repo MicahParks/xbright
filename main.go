@@ -52,10 +52,9 @@ func main() {
 	l := log.New(&bytes.Buffer{}, "", log.LUTC)
 	l.SetOutput(os.Stderr)
 	a := app.New()
-	boxes := makeSliders(l, &x)
 	w := a.NewWindow("fyne brightness controller")
-	w.SetContent(boxes)
-	//w.Resize(fyne.NewSize(500, 100))
+	w.SetContent(makeSliders(l, &x))
+	w.Resize(fyne.NewSize(400, 1))
 	w.ShowAndRun()
 	close(x.death)
 }
