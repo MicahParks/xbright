@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -11,10 +12,30 @@ import (
 	"fyne.io/fyne/widget"
 )
 
-type sChange struct {
+type slideC struct {
 	l    *log.Logger
 	prev float64
 	x    *xrandr
+}
+
+func makeSliders(l *log.Logger, x *xrandr) []*widget.Box {
+	boxes := make([]*widget.Box, 0)
+	for k, v := range x.displays {
+		sC := &slideC{
+			l:    l,
+			prev: v * 100,
+			x:    x,
+		}
+		sW := widget.NewSlider(0, 100)
+		sW.Step = 1
+		sW.Value = v * 100
+		sW.OnChanged = sC.onChanged
+		lW := widget.NewLabelWithStyle(k, fyne.TextAlignCenter, fyne.TextStyle{Monospace: true})
+		percent := widget.NewLabelWithStyle(fmt.Sprintf("%.f", v*100)+"%", fyne.TextAlignCenter, fyne.TextStyle{Monospace: true})
+		box := widget.NewHBox(lW, sW, percent)
+		boxes = append(boxes, box)
+	}
+	return boxes
 }
 
 func main() {
@@ -24,26 +45,20 @@ func main() {
 	}
 	l := log.New(&bytes.Buffer{}, "", log.LUTC)
 	l.SetOutput(os.Stderr)
-	sC := &sChange{
-		l: l,
-		x: &x,
-	}
-	slider := widget.NewSlider(0, 100)
-	slider.Step = 1
-	slider.Value = 100
-	slider.OnChanged = sC.sliderChange
-	box := widget.NewVBox(
-		slider,
-	)
+	boxes := makeSliders(l, &x)
+	box := widget.NewVBox()
 	a := app.New()
 	w := a.NewWindow("fyne brightness controller")
 	w.SetContent(box)
 	w.Resize(fyne.NewSize(500, 200))
+	for _, b := range boxes {
+		box.Append(b)
+	}
 	w.ShowAndRun()
 	close(x.death)
 }
 
-func (s *sChange) sliderChange(val float64) {
+func (s *slideC) onChanged(val float64) {
 	if val != s.prev {
 		s.prev = val
 		s.l.Println(val)
