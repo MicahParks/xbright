@@ -142,6 +142,7 @@ func (x *xrandr) loadDisplays() error {
 }
 
 func (x *xrandr) new(wait time.Duration) error {
+	x.death = make(chan struct{})
 	x.muxQ = &sync.Mutex{}
 	x.wait = wait
 	x.queued = make(map[string]float64)
