@@ -13,25 +13,27 @@ import (
 )
 
 type slideC struct {
-	l    *log.Logger
-	prev float64
-	x    *xrandr
+	l       *log.Logger
+	prev    float64
+	percent *widget.Label
+	x       *xrandr
 }
 
 func makeSliders(l *log.Logger, x *xrandr) []*widget.Box {
 	boxes := make([]*widget.Box, 0)
 	for k, v := range x.displays {
+		percent := widget.NewLabelWithStyle(fmt.Sprintf("%.f", v*100)+"%", fyne.TextAlignCenter, fyne.TextStyle{Monospace: true})
 		sC := &slideC{
-			l:    l,
-			prev: v * 100,
-			x:    x,
+			l:       l,
+			prev:    v * 100,
+			percent: percent,
+			x:       x,
 		}
 		sW := widget.NewSlider(0, 100)
 		sW.Step = 1
 		sW.Value = v * 100
 		sW.OnChanged = sC.onChanged
 		lW := widget.NewLabelWithStyle(k, fyne.TextAlignCenter, fyne.TextStyle{Monospace: true})
-		percent := widget.NewLabelWithStyle(fmt.Sprintf("%.f", v*100)+"%", fyne.TextAlignCenter, fyne.TextStyle{Monospace: true})
 		box := widget.NewHBox(lW, sW, percent)
 		boxes = append(boxes, box)
 	}
@@ -64,5 +66,7 @@ func (s *slideC) onChanged(val float64) {
 		s.l.Println(val)
 		val = val / 100
 		s.x.setBrightness("DP-1", val)
+		s.percent.SetText(fmt.Sprintf("%.f", val*100) + "%")
+		s.percent.Refresh()
 	}
 }
