@@ -21,21 +21,25 @@ type slideC struct {
 	name    string
 	prev    float64
 	percent *widget.Label
+	slider  *widget.Slider
 	x       *xrandr
 }
 
-func makeSliders(l *log.Logger, x *xrandr) *fyne.Container {
+func makeSliders(l *log.Logger, x *xrandr) (*fyne.Container, []*slideC) {
+	sCs := make([]*slideC, 0)
 	con := fyne.NewContainerWithLayout(layout.NewGridLayout(3))
 	for k, v := range x.displays {
 		percent := widget.NewLabelWithStyle(fmt.Sprintf("%.f", v*100)+"%", fyne.TextAlignCenter, fyne.TextStyle{Monospace: true})
+		sW := widget.NewSlider(0, 100)
 		sC := &slideC{
 			l:       l,
 			name:    k,
 			prev:    v * 100,
 			percent: percent,
+			slider:  sW,
 			x:       x,
 		}
-		sW := widget.NewSlider(0, 100)
+		sCs = append(sCs, sC)
 		sW.Step = 1
 		sW.Value = v * 100
 		sW.OnChanged = sC.onChanged
@@ -44,7 +48,7 @@ func makeSliders(l *log.Logger, x *xrandr) *fyne.Container {
 		con.AddObject(sW)
 		con.AddObject(percent)
 	}
-	return con
+	return con, sCs
 }
 
 func main() {
@@ -54,18 +58,20 @@ func main() {
 	}
 	l := log.New(&bytes.Buffer{}, "", log.LUTC)
 	l.SetOutput(os.Stderr)
+	u, err := user.Current()
+	if err != nil {
+		l.Println("couldn't get current user")
+		panic(err)
+	}
+	defaultPath := u.HomeDir + "/.bright.json"
 	a := app.New()
 	w := a.NewWindow("xBright")
-	w.SetContent(makeSliders(l, &x))
+	sliders, sCs := makeSliders(l, &x)
+	w.SetContent(sliders)
 	w.Resize(fyne.NewSize(400, 1))
-	s := settings{}
+	s := settings{Path: defaultPath}
 	if err := s.fromJson(); err != nil {
-		u, err := user.Current()
-		if err != nil {
-			l.Println("couldn't get current user")
-			panic(err)
-		}
-		s.Path = u.HomeDir + "/.bright.json"
+		s.Path = defaultPath
 		s.Preset1 = x.displays
 		s.Preset2 = make(map[string]float64)
 		s.Preset3 = make(map[string]float64)
@@ -78,6 +84,13 @@ func main() {
 	if haveSettings {
 		if err := x.refresh(s.Preset1); err != nil {
 			// Monitor from settings is missing.
+		} else {
+			for _, sC := range sCs {
+				if s.Preset1[sC.name] != sC.prev/100 {
+					sC.onChanged(s.Preset1[sC.name] * 100)
+					sC.slider.Value = s.Preset1[sC.name] * 100
+				}
+			}
 		}
 	}
 	w.ShowAndRun()
