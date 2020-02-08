@@ -22,9 +22,8 @@ type slideC struct {
 }
 
 func makeSliders(l *log.Logger, x *xrandr) *fyne.Container {
-	var a = app.New()
-	a.UniqueID()
-	cons := make([]*fyne.Container, 0)
+	app.New() // Required, https://github.com/fyne-io/fyne/issues/490
+	con := fyne.NewContainerWithLayout(layout.NewGridLayout(3))
 	for k, v := range x.displays {
 		percent := widget.NewLabelWithStyle(fmt.Sprintf("%.f", v*100)+"%", fyne.TextAlignCenter, fyne.TextStyle{Monospace: true})
 		sC := &slideC{
@@ -39,16 +38,9 @@ func makeSliders(l *log.Logger, x *xrandr) *fyne.Container {
 		sW.Value = v * 100
 		sW.OnChanged = sC.onChanged
 		lW := widget.NewLabelWithStyle(k, fyne.TextAlignCenter, fyne.TextStyle{Monospace: true})
-		c := fyne.NewContainerWithLayout(layout.NewGridLayout(3))
-		c.AddObject(lW)
-		c.AddObject(sW)
-		m := fyne.NewContainerWithLayout(layout.NewMaxLayout(), percent)
-		c.AddObject(m)
-		cons = append(cons, c)
-	}
-	con := fyne.NewContainerWithLayout(layout.NewGridLayout(1))
-	for _, b := range cons {
-		con.AddObject(b)
+		con.AddObject(lW)
+		con.AddObject(sW)
+		con.AddObject(percent)
 	}
 	return con
 }
@@ -64,7 +56,7 @@ func main() {
 	a := app.New()
 	w := a.NewWindow("fyne brightness controller")
 	w.SetContent(boxes)
-	w.Resize(fyne.NewSize(500, 200))
+	//w.Resize(fyne.NewSize(500, 100))
 	w.ShowAndRun()
 	close(x.death)
 }
