@@ -88,7 +88,6 @@ func main() {
 			for _, sC := range sCs {
 				if s.Preset1[sC.name] != sC.prev/100 {
 					newVal := s.Preset1[sC.name] * 100
-					sC.prev = newVal
 					sC.onChanged(newVal)
 					sC.slider.Value = newVal
 				}
