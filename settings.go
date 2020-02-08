@@ -23,14 +23,12 @@ import (
 //	}
 //}
 
-var settingsPath = "~/.bright.json"
-
 type settings struct {
 	Path    string
 	Preset1 map[string]float64
 	Preset2 map[string]float64
 	Preset3 map[string]float64
-	Refresh *time.Duration
+	Refresh time.Duration
 }
 
 func (s *settings) fromJson() error {

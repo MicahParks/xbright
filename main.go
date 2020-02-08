@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/user"
 	"time"
 
 	"fyne.io/fyne"
@@ -12,6 +13,8 @@ import (
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/widget"
 )
+
+var haveSettings = true
 
 type slideC struct {
 	l       *log.Logger
@@ -55,6 +58,28 @@ func main() {
 	w := a.NewWindow("xBright")
 	w.SetContent(makeSliders(l, &x))
 	w.Resize(fyne.NewSize(400, 1))
+	s := settings{}
+	if err := s.fromJson(); err != nil {
+		u, err := user.Current()
+		if err != nil {
+			l.Println("couldn't get current user")
+			panic(err)
+		}
+		s.Path = u.HomeDir + "/.bright.json"
+		s.Preset1 = x.displays
+		s.Preset2 = make(map[string]float64)
+		s.Preset3 = make(map[string]float64)
+		s.Refresh = time.Millisecond * 5
+		if err := s.toJson(); err != nil {
+			haveSettings = false
+			l.Println(err.Error() + "\n" + fmt.Sprintf("couldn't make settings file at %s", s.Path))
+		}
+	}
+	if haveSettings {
+		if err := x.refresh(s.Preset1); err != nil {
+			// Monitor from settings is missing.
+		}
+	}
 	w.ShowAndRun()
 	close(x.death)
 }
