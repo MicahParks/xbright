@@ -74,7 +74,7 @@ func main() {
 	w.SetContent(sliders)
 	w.Resize(fyne.NewSize(400, 1))
 	s := settings{Path: defaultPath}
-	if err := s.fromJson(); err != nil {
+	if err := s.fromJson(); err != nil || s.DefaultPreset == nil || s.Refresh == 0 || s.Path == "" {
 		s.Path = defaultPath
 		s.DefaultPreset = x.displays
 		s.Preset2 = make(map[string]float64)
