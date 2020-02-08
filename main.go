@@ -14,6 +14,7 @@ import (
 
 type slideC struct {
 	l       *log.Logger
+	name    string
 	prev    float64
 	percent *widget.Label
 	x       *xrandr
@@ -25,6 +26,7 @@ func makeSliders(l *log.Logger, x *xrandr) []*widget.Box {
 		percent := widget.NewLabelWithStyle(fmt.Sprintf("%.f", v*100)+"%", fyne.TextAlignCenter, fyne.TextStyle{Monospace: true})
 		sC := &slideC{
 			l:       l,
+			name:    k,
 			prev:    v * 100,
 			percent: percent,
 			x:       x,
@@ -65,7 +67,7 @@ func (s *slideC) onChanged(val float64) {
 		s.prev = val
 		s.l.Println(val)
 		val = val / 100
-		s.x.setBrightness("DP-1", val)
+		s.x.setBrightness(s.name, val)
 		s.percent.SetText(fmt.Sprintf("%.f", val*100) + "%")
 		s.percent.Refresh()
 	}
