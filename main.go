@@ -14,8 +14,6 @@ import (
 	"fyne.io/fyne/widget"
 )
 
-var haveSettings = true
-
 type slideC struct {
 	l       *log.Logger
 	name    string
@@ -60,8 +58,7 @@ func main() {
 	l.SetOutput(os.Stderr)
 	u, err := user.Current()
 	if err != nil {
-		l.Println("couldn't get current user")
-		panic(err)
+		l.Fatalln(err.Error() + "\ncouldn't get current user")
 	}
 	defaultPath := u.HomeDir + "/.bright.json"
 	a := app.New()
@@ -77,20 +74,17 @@ func main() {
 		s.Preset3 = make(map[string]float64)
 		s.Refresh = time.Millisecond * 5
 		if err := s.toJson(); err != nil {
-			haveSettings = false
-			l.Println(err.Error() + "\n" + fmt.Sprintf("couldn't make settings file at %s", s.Path))
+			l.Fatalln(err.Error() + fmt.Sprintf("\ncouldn't make settings file at %s", s.Path))
 		}
 	}
-	if haveSettings {
-		if err := x.refresh(s.Preset1); err != nil {
-			// Monitor from settings is missing.
-		} else {
-			for _, sC := range sCs {
-				if s.Preset1[sC.name] != sC.prev/100 {
-					newVal := s.Preset1[sC.name] * 100
-					sC.onChanged(newVal)
-					sC.slider.Value = newVal
-				}
+	if err := x.refresh(s.Preset1); err != nil {
+		// Monitor from settings is missing.
+	} else {
+		for _, sC := range sCs {
+			if s.Preset1[sC.name] != sC.prev/100 {
+				newVal := s.Preset1[sC.name] * 100
+				sC.onChanged(newVal)
+				sC.slider.Value = newVal
 			}
 		}
 	}
