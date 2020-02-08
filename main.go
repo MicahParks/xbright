@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/user"
+	"sort"
 	"time"
 
 	"fyne.io/fyne"
@@ -26,7 +27,13 @@ type slideC struct {
 func makeSliders(l *log.Logger, x *xrandr) (*fyne.Container, []*slideC) {
 	sCs := make([]*slideC, 0)
 	con := fyne.NewContainerWithLayout(layout.NewGridLayout(3))
-	for k, v := range x.displays {
+	str := make([]string, 0)
+	for k := range x.displays {
+		str = append(str, k)
+	}
+	sort.Strings(str)
+	for _, k := range str {
+		v := x.displays[k]
 		percent := widget.NewLabelWithStyle(fmt.Sprintf("%.f", v*100)+"%", fyne.TextAlignCenter, fyne.TextStyle{Monospace: true})
 		sW := widget.NewSlider(0, 100)
 		sC := &slideC{
