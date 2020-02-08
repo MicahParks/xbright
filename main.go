@@ -87,8 +87,10 @@ func main() {
 		} else {
 			for _, sC := range sCs {
 				if s.Preset1[sC.name] != sC.prev/100 {
-					sC.onChanged(s.Preset1[sC.name] * 100)
-					sC.slider.Value = s.Preset1[sC.name] * 100
+					newVal := s.Preset1[sC.name] * 100
+					sC.prev = newVal
+					sC.onChanged(newVal)
+					sC.slider.Value = newVal
 				}
 			}
 		}
