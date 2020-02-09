@@ -97,7 +97,9 @@ func main() {
 			l.Fatalln(err.Error() + fmt.Sprintf("\ncouldn't make settings file at %s", s.Path))
 		}
 	}
-	loadPreset(&s, sCs, &x) // Ignore error
+	if err := loadPreset(&s, sCs, &x); err != nil {
+		// Ignore error.
+	}
 	save := false
 	radioSwitch := func(s string) {
 		switch s {
@@ -111,7 +113,7 @@ func main() {
 	buttons := widget.NewVBox(
 		widget.NewButton("Default", func() {
 			if save {
-				if err := savePreset(l, &s.DefaultPreset, &s, &x); err != nil {
+				if err := savePreset(&s.DefaultPreset, &s, &x); err != nil {
 					log.Fatalln(err)
 				}
 			} else {
@@ -122,7 +124,7 @@ func main() {
 		}),
 		widget.NewButton("preset 2", func() {
 			if save {
-				if err := savePreset(l, &s.DefaultPreset, &s, &x); err != nil {
+				if err := savePreset(&s.DefaultPreset, &s, &x); err != nil {
 					log.Fatalln(err)
 				}
 			} else {
@@ -133,7 +135,7 @@ func main() {
 		}),
 		widget.NewButton("preset 3", func() {
 			if save {
-				if err := savePreset(l, &s.DefaultPreset, &s, &x); err != nil {
+				if err := savePreset(&s.DefaultPreset, &s, &x); err != nil {
 					log.Fatalln(err)
 				}
 			} else {
@@ -153,7 +155,7 @@ func main() {
 	close(x.death)
 }
 
-func savePreset(l *log.Logger, m *map[string]float64, s *settings, x *xrandr) error {
+func savePreset(m *map[string]float64, s *settings, x *xrandr) error {
 	*m = make(map[string]float64)
 	for k, v := range x.displays {
 		(*m)[k] = v
