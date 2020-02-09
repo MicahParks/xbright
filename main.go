@@ -23,6 +23,20 @@ type slideC struct {
 	x       *xrandr
 }
 
+func (s *slideC) onChanged(val float64) {
+	if val != s.prev {
+		s.prev = val
+		s.l.Println(val)
+		val = val / 100
+		if val > 1 || val <= 0 {
+			return
+		}
+		s.x.setBrightness(s.name, val)
+		s.percent.SetText(fmt.Sprintf("%.f", val*100) + "%")
+		s.percent.Refresh()
+	}
+}
+
 func main() {
 	x := xrandr{}
 	if err := x.new(time.Millisecond * 5); err != nil {
@@ -51,20 +65,6 @@ func main() {
 	w.SetContent(tabs)
 	w.ShowAndRun()
 	close(x.death)
-}
-
-func (s *slideC) onChanged(val float64) {
-	if val != s.prev {
-		s.prev = val
-		s.l.Println(val)
-		val = val / 100
-		if val > 1 || val <= 0 {
-			return
-		}
-		s.x.setBrightness(s.name, val)
-		s.percent.SetText(fmt.Sprintf("%.f", val*100) + "%")
-		s.percent.Refresh()
-	}
 }
 
 func shortcut(tabs *widget.TabContainer, w fyne.Window) {
