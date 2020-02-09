@@ -110,13 +110,12 @@ func (s *settings) toJson() error {
 func loadPreset(m *map[string]float64, sCs []*slideC, x *xrandr) error {
 	if err := x.refresh(*m); err != nil {
 		return err
-	} else {
-		for _, sC := range sCs {
-			if (*m)[sC.name] != sC.prev/100 {
-				newVal := (*m)[sC.name] * 100
-				sC.onChanged(newVal)
-				sC.slider.Value = newVal
-			}
+	}
+	for _, sC := range sCs {
+		if (*m)[sC.name] != sC.prev/100 {
+			newVal := (*m)[sC.name] * 100
+			sC.onChanged(newVal)
+			sC.slider.Value = newVal
 		}
 	}
 	return nil

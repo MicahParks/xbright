@@ -12,10 +12,10 @@ import (
 	"time"
 )
 
-var noBright = errors.New("xrandr isn't reporting connected diplay's brightness")
-var noDisplays = errors.New("no connected displays found in xrandr --query")
-var notDisplay = errors.New("given string is not a connected display")
-var tooBright = errors.New("trying to set value to over 100% brightness")
+var errNoBright = errors.New("xrandr isn't reporting connected diplay's brightness")
+var errNoDisplays = errors.New("no connected displays found in xrandr --query")
+var errNotDisplay = errors.New("given string is not a connected display")
+var errTooBright = errors.New("trying to set value to over 100% brightness")
 
 type xrandr struct {
 	death    chan struct{}
@@ -34,14 +34,14 @@ func (x *xrandr) brightLoop() {
 			x.muxQ.Lock()
 			for k, v := range x.queued {
 				if v > 1 {
-					panic(tooBright)
+					panic(errTooBright)
 				}
 				m, err := buildMap()
 				if err != nil {
 					panic(err)
 				}
 				if _, ok := m[k]; !ok {
-					panic(notDisplay)
+					panic(errNotDisplay)
 				}
 				m[k] = v
 				if err = x.refresh(m); err != nil {
@@ -109,7 +109,7 @@ func brights(expected int, out []byte) ([]float64, error) {
 	re := regexp.MustCompile(`Brightness.*`)
 	bBrightnesses := re.FindAll(out, -1)
 	if bBrightnesses == nil {
-		return nil, noBright
+		return nil, errNoBright
 	}
 	brightnesses := make([]float64, 0)
 	for _, bBrightness := range bBrightnesses {
@@ -121,7 +121,7 @@ func brights(expected int, out []byte) ([]float64, error) {
 		brightnesses = append(brightnesses, float)
 	}
 	if len(brightnesses) != expected {
-		return nil, noBright
+		return nil, errNoBright
 	}
 	return brightnesses, nil
 }
@@ -147,7 +147,7 @@ func displays(out []byte) ([]string, error) {
 	re := regexp.MustCompile(`.+\b(connected)\b.*\n`)
 	bDisplays := re.FindAll(out, -1)
 	if bDisplays == nil {
-		return nil, noDisplays
+		return nil, errNoDisplays
 	}
 	d := make([]string, 0)
 	for _, bDisplay := range bDisplays {
