@@ -184,6 +184,9 @@ func (s *slideC) onChanged(val float64) {
 		s.prev = val
 		s.l.Println(val)
 		val = val / 100
+		if val > 1 || val <= 0 {
+			return
+		}
 		s.x.setBrightness(s.name, val)
 		s.percent.SetText(fmt.Sprintf("%.f", val*100) + "%")
 		s.percent.Refresh()
