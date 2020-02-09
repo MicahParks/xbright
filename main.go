@@ -24,13 +24,13 @@ type slideC struct {
 	x       *xrandr
 }
 
-func loadPreset(s *settings, sCs []*slideC, x *xrandr) error {
-	if err := x.refresh(s.DefaultPreset); err != nil {
+func loadPreset(m *map[string]float64, sCs []*slideC, x *xrandr) error {
+	if err := x.refresh(*m); err != nil {
 		return err
 	} else {
 		for _, sC := range sCs {
-			if s.DefaultPreset[sC.name] != sC.prev/100 {
-				newVal := s.DefaultPreset[sC.name] * 100
+			if (*m)[sC.name] != sC.prev/100 {
+				newVal := (*m)[sC.name] * 100
 				sC.onChanged(newVal)
 				sC.slider.Value = newVal
 			}
@@ -97,7 +97,7 @@ func main() {
 			l.Fatalln(err.Error() + fmt.Sprintf("\ncouldn't make settings file at %s", s.Path))
 		}
 	}
-	if err := loadPreset(&s, sCs, &x); err != nil {
+	if err := loadPreset(&s.DefaultPreset, sCs, &x); err != nil {
 		// Ignore error.
 	}
 	save := false
@@ -117,29 +117,29 @@ func main() {
 					log.Fatalln(err)
 				}
 			} else {
-				if err := loadPreset(&s, sCs, &x); err != nil {
+				if err := loadPreset(&s.DefaultPreset, sCs, &x); err != nil {
 					log.Fatalln(err)
 				}
 			}
 		}),
 		widget.NewButton("preset 2", func() {
 			if save {
-				if err := savePreset(&s.DefaultPreset, &s, &x); err != nil {
+				if err := savePreset(&s.Preset2, &s, &x); err != nil {
 					log.Fatalln(err)
 				}
 			} else {
-				if err := loadPreset(&s, sCs, &x); err != nil {
+				if err := loadPreset(&s.Preset2, sCs, &x); err != nil {
 					log.Fatalln(err)
 				}
 			}
 		}),
 		widget.NewButton("preset 3", func() {
 			if save {
-				if err := savePreset(&s.DefaultPreset, &s, &x); err != nil {
+				if err := savePreset(&s.Preset3, &s, &x); err != nil {
 					log.Fatalln(err)
 				}
 			} else {
-				if err := loadPreset(&s, sCs, &x); err != nil {
+				if err := loadPreset(&s.Preset3, sCs, &x); err != nil {
 					log.Fatalln(err)
 				}
 			}
