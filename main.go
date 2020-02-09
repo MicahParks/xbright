@@ -6,13 +6,11 @@ import (
 	"log"
 	"os"
 	"os/user"
-	"sort"
 	"time"
 
 	"fyne.io/fyne"
 	"fyne.io/fyne/app"
 	"fyne.io/fyne/driver/desktop"
-	"fyne.io/fyne/layout"
 	"fyne.io/fyne/widget"
 )
 
@@ -23,53 +21,6 @@ type slideC struct {
 	percent *widget.Label
 	slider  *widget.Slider
 	x       *xrandr
-}
-
-func loadPreset(m *map[string]float64, sCs []*slideC, x *xrandr) error {
-	if err := x.refresh(*m); err != nil {
-		return err
-	} else {
-		for _, sC := range sCs {
-			if (*m)[sC.name] != sC.prev/100 {
-				newVal := (*m)[sC.name] * 100
-				sC.onChanged(newVal)
-				sC.slider.Value = newVal
-			}
-		}
-	}
-	return nil
-}
-
-func makeSliders(l *log.Logger, x *xrandr) (*fyne.Container, []*slideC) {
-	sCs := make([]*slideC, 0)
-	con := fyne.NewContainerWithLayout(layout.NewGridLayout(3))
-	str := make([]string, 0)
-	for k := range x.displays {
-		str = append(str, k)
-	}
-	sort.Strings(str)
-	for _, k := range str {
-		v := x.displays[k]
-		percent := widget.NewLabelWithStyle(fmt.Sprintf("%.f", v*100)+"%", fyne.TextAlignCenter, fyne.TextStyle{Monospace: true})
-		sW := widget.NewSlider(0, 100)
-		sC := &slideC{
-			l:       l,
-			name:    k,
-			prev:    v * 100,
-			percent: percent,
-			slider:  sW,
-			x:       x,
-		}
-		sCs = append(sCs, sC)
-		sW.Step = 1
-		sW.Value = v * 100
-		sW.OnChanged = sC.onChanged
-		lW := widget.NewLabelWithStyle(k, fyne.TextAlignCenter, fyne.TextStyle{Monospace: true})
-		con.AddObject(lW)
-		con.AddObject(sW)
-		con.AddObject(percent)
-	}
-	return con, sCs
 }
 
 func main() {
@@ -90,93 +41,16 @@ func main() {
 	w := a.NewWindow("xBright")
 	sliders, sCs := makeSliders(l, &x)
 	s := settings{Path: defaultPath}
-	if err := s.fromJson(); err != nil || s.DefaultPreset == nil || s.Refresh == 0 || s.Path == "" {
-		s.Path = defaultPath
-		s.DefaultPreset = x.displays
-		s.Preset2 = make(map[string]float64)
-		s.Preset3 = make(map[string]float64)
-		s.Refresh = time.Millisecond * 5
-		if err := s.toJson(); err != nil {
-			l.Fatalln(err.Error() + fmt.Sprintf("\ncouldn't make settings file at %s", s.Path))
-		}
-	}
-	if err := loadPreset(&s.DefaultPreset, sCs, &x); err != nil {
-		// Ignore error.
-	}
+	s.presets(defaultPath, l, sCs, &x)
 	save := false
-	radioSwitch := func(s string) {
-		switch s {
-		case "load":
-			save = false
-		case "save":
-			save = true
-		}
-	}
-	radios := widget.NewRadio([]string{"load", "save"}, radioSwitch)
-	radios.SetSelected("load")
-	buttons := widget.NewVBox(
-		widget.NewButton("default", func() {
-			if save {
-				if err := savePreset(&s.DefaultPreset, &s, &x); err != nil {
-					log.Fatalln(err)
-				}
-			} else {
-				if err := loadPreset(&s.DefaultPreset, sCs, &x); err != nil {
-					log.Fatalln(err)
-				}
-			}
-		}),
-		widget.NewButton("preset 2", func() {
-			if save {
-				if err := savePreset(&s.Preset2, &s, &x); err != nil {
-					log.Fatalln(err)
-				}
-			} else {
-				if err := loadPreset(&s.Preset2, sCs, &x); err != nil {
-					log.Fatalln(err)
-				}
-			}
-		}),
-		widget.NewButton("preset 3", func() {
-			if save {
-				if err := savePreset(&s.Preset3, &s, &x); err != nil {
-					log.Fatalln(err)
-				}
-			} else {
-				if err := loadPreset(&s.Preset3, sCs, &x); err != nil {
-					log.Fatalln(err)
-				}
-			}
-		}),
-	)
+	settings := s.settingsTab(&save, sCs, &x)
 	slTab := widget.NewTabItem("sliders", sliders)
-	stTab := fyne.NewContainerWithLayout(layout.NewGridLayout(2), radios, buttons)
-	settings := widget.NewTabItem("settings", stTab)
 	tabs := widget.NewTabContainer(slTab, settings)
+	shortcut(tabs, w)
 	w.Resize(fyne.NewSize(400, 1))
-	ctrlTab := desktop.CustomShortcut{KeyName: fyne.KeyTab, Modifier: desktop.ControlModifier}
-	w.Canvas().AddShortcut(&ctrlTab, func(shortcut fyne.Shortcut) {
-		switch currentTab := tabs.CurrentTabIndex(); currentTab {
-		case 0:
-			tabs.SelectTabIndex(1)
-		case 1:
-			tabs.SelectTabIndex(0)
-		}
-	})
 	w.SetContent(tabs)
 	w.ShowAndRun()
 	close(x.death)
-}
-
-func savePreset(m *map[string]float64, s *settings, x *xrandr) error {
-	*m = make(map[string]float64)
-	for k, v := range x.displays {
-		(*m)[k] = v
-	}
-	if err := s.toJson(); err != nil {
-		return err
-	}
-	return nil
 }
 
 func (s *slideC) onChanged(val float64) {
@@ -191,4 +65,16 @@ func (s *slideC) onChanged(val float64) {
 		s.percent.SetText(fmt.Sprintf("%.f", val*100) + "%")
 		s.percent.Refresh()
 	}
+}
+
+func shortcut(tabs *widget.TabContainer, w fyne.Window) {
+	ctrlTab := desktop.CustomShortcut{KeyName: fyne.KeyTab, Modifier: desktop.ControlModifier}
+	w.Canvas().AddShortcut(&ctrlTab, func(shortcut fyne.Shortcut) {
+		switch currentTab := tabs.CurrentTabIndex(); currentTab {
+		case 0:
+			tabs.SelectTabIndex(1)
+		case 1:
+			tabs.SelectTabIndex(0)
+		}
+	})
 }
