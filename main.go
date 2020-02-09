@@ -83,7 +83,7 @@ func main() {
 	if err != nil {
 		l.Fatalln(err.Error() + "\ncouldn't get current user")
 	}
-	defaultPath := u.HomeDir + "/.bright.json"
+	defaultPath := u.HomeDir + "/.xbright.json"
 	a := app.New()
 	icon, err := fyne.LoadResourceFromPath("pics/icon.png")
 	a.SetIcon(icon)
