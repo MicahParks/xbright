@@ -25,84 +25,6 @@ type xrandr struct {
 	wait     time.Duration
 }
 
-func brights(expected int, out []byte) ([]float64, error) {
-	re := regexp.MustCompile(`Brightness.*`)
-	bBrightnesses := re.FindAll(out, -1)
-	if bBrightnesses == nil {
-		return nil, noBright
-	}
-	brightnesses := make([]float64, 0)
-	for _, bBrightness := range bBrightnesses {
-		bFloat := bytes.Split(bBrightness, []byte(" "))[1]
-		float, err := strconv.ParseFloat(string(bFloat), 64)
-		if err != nil {
-			return nil, err
-		}
-		brightnesses = append(brightnesses, float)
-	}
-	if len(brightnesses) != expected {
-		return nil, noBright
-	}
-	return brightnesses, nil
-}
-
-func buildMap() (map[string]float64, error) {
-	out, err := query()
-	if err != nil {
-		return nil, err
-	}
-	d, err := displays(out)
-	brightnesses, err := brights(len(d), out)
-	if err != nil {
-		return nil, err
-	}
-	m := make(map[string]float64)
-	for i, display := range d {
-		m[display] = brightnesses[i]
-	}
-	return m, nil
-}
-
-func displays(out []byte) ([]string, error) {
-	re := regexp.MustCompile(`.+\b(connected)\b.*\n`)
-	bDisplays := re.FindAll(out, -1)
-	if bDisplays == nil {
-		return nil, noDisplays
-	}
-	d := make([]string, 0)
-	for _, bDisplay := range bDisplays {
-		d = append(d, string(bytes.Split(bDisplay, []byte(" "))[0]))
-	}
-	return d, nil
-}
-
-func query() ([]byte, error) {
-	cmd := exec.Command("xrandr", "--verbose", "--query")
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, err
-	}
-	if err = cmd.Start(); err != nil {
-		return nil, err
-	}
-	out, err := ioutil.ReadAll(stdout)
-	if err != nil {
-		return nil, err
-	}
-	if err = stdout.Close(); err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func xrandrBright(display string, bright float64) error {
-	cmd := exec.Command("xrandr", "--output", display, "--brightness", fmt.Sprintf("%.2f", bright))
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (x *xrandr) brightLoop() {
 	for {
 		select {
@@ -181,4 +103,82 @@ func (x *xrandr) setBrightness(set string, val float64) {
 	x.muxQ.Lock()
 	x.queued[set] = val
 	x.muxQ.Unlock()
+}
+
+func brights(expected int, out []byte) ([]float64, error) {
+	re := regexp.MustCompile(`Brightness.*`)
+	bBrightnesses := re.FindAll(out, -1)
+	if bBrightnesses == nil {
+		return nil, noBright
+	}
+	brightnesses := make([]float64, 0)
+	for _, bBrightness := range bBrightnesses {
+		bFloat := bytes.Split(bBrightness, []byte(" "))[1]
+		float, err := strconv.ParseFloat(string(bFloat), 64)
+		if err != nil {
+			return nil, err
+		}
+		brightnesses = append(brightnesses, float)
+	}
+	if len(brightnesses) != expected {
+		return nil, noBright
+	}
+	return brightnesses, nil
+}
+
+func buildMap() (map[string]float64, error) {
+	out, err := query()
+	if err != nil {
+		return nil, err
+	}
+	d, err := displays(out)
+	brightnesses, err := brights(len(d), out)
+	if err != nil {
+		return nil, err
+	}
+	m := make(map[string]float64)
+	for i, display := range d {
+		m[display] = brightnesses[i]
+	}
+	return m, nil
+}
+
+func displays(out []byte) ([]string, error) {
+	re := regexp.MustCompile(`.+\b(connected)\b.*\n`)
+	bDisplays := re.FindAll(out, -1)
+	if bDisplays == nil {
+		return nil, noDisplays
+	}
+	d := make([]string, 0)
+	for _, bDisplay := range bDisplays {
+		d = append(d, string(bytes.Split(bDisplay, []byte(" "))[0]))
+	}
+	return d, nil
+}
+
+func query() ([]byte, error) {
+	cmd := exec.Command("xrandr", "--verbose", "--query")
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+	if err = cmd.Start(); err != nil {
+		return nil, err
+	}
+	out, err := ioutil.ReadAll(stdout)
+	if err != nil {
+		return nil, err
+	}
+	if err = stdout.Close(); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func xrandrBright(display string, bright float64) error {
+	cmd := exec.Command("xrandr", "--output", display, "--brightness", fmt.Sprintf("%.2f", bright))
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+	return nil
 }
