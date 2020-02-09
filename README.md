@@ -1,3 +1,4 @@
+[![Go Report Card](https://goreportcard.com/badge/gitlab.com/MicahParks/xBright)](https://goreportcard.com/report/gitlab.com/MicahParks/xBright)
 # xBright
 
 A simple tool to edit your display's brightness.
