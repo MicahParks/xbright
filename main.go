@@ -24,6 +24,21 @@ type slideC struct {
 	x       *xrandr
 }
 
+func loadPreset(s *settings, sCs []*slideC, x *xrandr) error {
+	if err := x.refresh(s.DefaultPreset); err != nil {
+		return err
+	} else {
+		for _, sC := range sCs {
+			if s.DefaultPreset[sC.name] != sC.prev/100 {
+				newVal := s.DefaultPreset[sC.name] * 100
+				sC.onChanged(newVal)
+				sC.slider.Value = newVal
+			}
+		}
+	}
+	return nil
+}
+
 func makeSliders(l *log.Logger, x *xrandr) (*fyne.Container, []*slideC) {
 	sCs := make([]*slideC, 0)
 	con := fyne.NewContainerWithLayout(layout.NewGridLayout(3))
@@ -82,53 +97,71 @@ func main() {
 			l.Fatalln(err.Error() + fmt.Sprintf("\ncouldn't make settings file at %s", s.Path))
 		}
 	}
-	if err := x.refresh(s.DefaultPreset); err != nil {
-		// Monitor from settings is missing.
-	} else {
-		for _, sC := range sCs {
-			if s.DefaultPreset[sC.name] != sC.prev/100 {
-				newVal := s.DefaultPreset[sC.name] * 100
-				sC.onChanged(newVal)
-				sC.slider.Value = newVal
-			}
+	loadPreset(&s, sCs, &x) // Ignore error
+	save := false
+	radioSwitch := func(s string) {
+		switch s {
+		case "load":
+			save = false
+		case "save":
+			save = true
 		}
 	}
-	slTab := widget.NewTabItem("sliders", sliders)
-	stTab := fyne.NewContainerWithLayout(layout.NewMaxLayout(), widget.NewVBox(
+	radios := widget.NewRadio([]string{"load", "save"}, radioSwitch)
+	buttons := widget.NewVBox(
 		widget.NewButton("Default", func() {
-			s.DefaultPreset = make(map[string]float64)
-			for k, v := range x.displays {
-				s.DefaultPreset[k] = v
-			}
-			if err := s.toJson(); err != nil {
-				l.Fatalln("failed to save to default profile")
+			if save {
+				if err := savePreset(l, &s.DefaultPreset, &s, &x); err != nil {
+					log.Fatalln(err)
+				}
+			} else {
+				if err := loadPreset(&s, sCs, &x); err != nil {
+					log.Fatalln(err)
+				}
 			}
 		}),
 		widget.NewButton("preset 2", func() {
-			s.Preset2 = make(map[string]float64)
-			for k, v := range x.displays {
-				s.Preset2[k] = v
-			}
-			if err := s.toJson(); err != nil {
-				l.Fatalln("failed to save to preset 2")
+			if save {
+				if err := savePreset(l, &s.DefaultPreset, &s, &x); err != nil {
+					log.Fatalln(err)
+				}
+			} else {
+				if err := loadPreset(&s, sCs, &x); err != nil {
+					log.Fatalln(err)
+				}
 			}
 		}),
 		widget.NewButton("preset 3", func() {
-			s.Preset3 = make(map[string]float64)
-			for k, v := range x.displays {
-				s.Preset3[k] = v
-			}
-			if err := s.toJson(); err != nil {
-				l.Fatalln("failed to save to preset 2")
+			if save {
+				if err := savePreset(l, &s.DefaultPreset, &s, &x); err != nil {
+					log.Fatalln(err)
+				}
+			} else {
+				if err := loadPreset(&s, sCs, &x); err != nil {
+					log.Fatalln(err)
+				}
 			}
 		}),
-	))
+	)
+	slTab := widget.NewTabItem("sliders", sliders)
+	stTab := fyne.NewContainerWithLayout(layout.NewGridLayout(2), radios, buttons)
 	settings := widget.NewTabItem("settings", stTab)
 	tabs := widget.NewTabContainer(slTab, settings)
 	w.Resize(fyne.NewSize(400, 1))
 	w.SetContent(tabs)
 	w.ShowAndRun()
 	close(x.death)
+}
+
+func savePreset(l *log.Logger, m *map[string]float64, s *settings, x *xrandr) error {
+	*m = make(map[string]float64)
+	for k, v := range x.displays {
+		(*m)[k] = v
+	}
+	if err := s.toJson(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *slideC) onChanged(val float64) {
