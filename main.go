@@ -110,6 +110,7 @@ func main() {
 		}
 	}
 	radios := widget.NewRadio([]string{"load", "save"}, radioSwitch)
+	radios.SetSelected("load")
 	buttons := widget.NewVBox(
 		widget.NewButton("Default", func() {
 			if save {
