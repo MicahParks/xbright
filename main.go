@@ -84,6 +84,8 @@ func main() {
 	}
 	defaultPath := u.HomeDir + "/.bright.json"
 	a := app.New()
+	icon, err := fyne.LoadResourceFromPath("pics/icon.png")
+	a.SetIcon(icon)
 	w := a.NewWindow("xBright")
 	sliders, sCs := makeSliders(l, &x)
 	s := settings{Path: defaultPath}
