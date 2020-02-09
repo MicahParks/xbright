@@ -132,6 +132,9 @@ func buildMap() (map[string]float64, error) {
 		return nil, err
 	}
 	d, err := displays(out)
+	if err != nil {
+		return nil, err
+	}
 	brightnesses, err := brights(len(d), out)
 	if err != nil {
 		return nil, err
