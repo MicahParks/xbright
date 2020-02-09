@@ -38,7 +38,7 @@ func (s *slideC) onChanged(val float64) {
 }
 
 func main() {
-	x := xrandr{}
+	x := &xrandr{}
 	if err := x.new(time.Millisecond * 5); err != nil {
 		panic(err)
 	}
@@ -56,11 +56,11 @@ func main() {
 	}
 	a.SetIcon(icon)
 	w := a.NewWindow("xBright")
-	sliders, sCs := makeSliders(l, &x)
+	sliders, sCs := makeSliders(l, x)
 	s := settings{Path: defaultPath}
-	s.presets(defaultPath, l, sCs, &x)
+	s.presets(defaultPath, l, sCs, x)
 	save := false
-	settings := s.settingsTab(&save, sCs, &x)
+	settings := s.settingsTab(&save, sCs, x)
 	slTab := widget.NewTabItem("sliders", sliders)
 	tabs := widget.NewTabContainer(slTab, settings)
 	shortcut(tabs, w)
