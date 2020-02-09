@@ -11,6 +11,7 @@ import (
 
 	"fyne.io/fyne"
 	"fyne.io/fyne/app"
+	"fyne.io/fyne/driver/desktop"
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/widget"
 )
@@ -153,6 +154,15 @@ func main() {
 	settings := widget.NewTabItem("settings", stTab)
 	tabs := widget.NewTabContainer(slTab, settings)
 	w.Resize(fyne.NewSize(400, 1))
+	ctrlTab := desktop.CustomShortcut{KeyName: fyne.KeyTab, Modifier: desktop.ControlModifier}
+	w.Canvas().AddShortcut(&ctrlTab, func(shortcut fyne.Shortcut) {
+		switch currentTab := tabs.CurrentTabIndex(); currentTab {
+		case 0:
+			tabs.SelectTabIndex(1)
+		case 1:
+			tabs.SelectTabIndex(0)
+		}
+	})
 	w.SetContent(tabs)
 	w.ShowAndRun()
 	close(x.death)
