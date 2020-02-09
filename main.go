@@ -71,8 +71,6 @@ func main() {
 	a := app.New()
 	w := a.NewWindow("xBright")
 	sliders, sCs := makeSliders(l, &x)
-	w.SetContent(sliders)
-	w.Resize(fyne.NewSize(400, 1))
 	s := settings{Path: defaultPath}
 	if err := s.fromJson(); err != nil || s.DefaultPreset == nil || s.Refresh == 0 || s.Path == "" {
 		s.Path = defaultPath
@@ -95,6 +93,40 @@ func main() {
 			}
 		}
 	}
+	slTab := widget.NewTabItem("sliders", sliders)
+	stTab := fyne.NewContainerWithLayout(layout.NewMaxLayout(), widget.NewVBox(
+		widget.NewButton("Default", func() {
+			s.DefaultPreset = make(map[string]float64)
+			for k, v := range x.displays {
+				s.DefaultPreset[k] = v
+			}
+			if err := s.toJson(); err != nil {
+				l.Fatalln("failed to save to default profile")
+			}
+		}),
+		widget.NewButton("preset 2", func() {
+			s.Preset2 = make(map[string]float64)
+			for k, v := range x.displays {
+				s.Preset2[k] = v
+			}
+			if err := s.toJson(); err != nil {
+				l.Fatalln("failed to save to preset 2")
+			}
+		}),
+		widget.NewButton("preset 3", func() {
+			s.Preset3 = make(map[string]float64)
+			for k, v := range x.displays {
+				s.Preset3[k] = v
+			}
+			if err := s.toJson(); err != nil {
+				l.Fatalln("failed to save to preset 2")
+			}
+		}),
+	))
+	settings := widget.NewTabItem("settings", stTab)
+	tabs := widget.NewTabContainer(slTab, settings)
+	w.Resize(fyne.NewSize(400, 1))
+	w.SetContent(tabs)
 	w.ShowAndRun()
 	close(x.death)
 }
