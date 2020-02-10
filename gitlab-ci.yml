@@ -1,0 +1,8 @@
+image: "golang"
+
+before_script:
+  - go mod download
+
+gbuild:
+  script:
+    - go build -o xbright *.go
