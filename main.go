@@ -26,7 +26,6 @@ type slideC struct {
 func (s *slideC) onChanged(val float64) {
 	if val != s.prev {
 		s.prev = val
-		s.l.Println(val)
 		val = val / 100
 		if val > 1 || val <= 0 {
 			return
@@ -55,7 +54,7 @@ func main() {
 		l.Println("couldn't load icon")
 	}
 	a.SetIcon(icon)
-	w := a.NewWindow("xBright")
+	w := a.NewWindow("xbright")
 	sliders, sCs := makeSliders(l, x)
 	s := settings{Path: defaultPath}
 	s.presets(defaultPath, l, sCs, x)
