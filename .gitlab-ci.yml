@@ -22,10 +22,10 @@ deb:
   artifacts:
     expose_as: 'deb'
     name: 'xbright.deb'
-    paths: ['./xbright', './xbright.deb']
+    paths: ['./xbright.deb']
     when: on_success
   before_script: ['go get fyne.io/fyne/cmd/fyne']
   dependencies:
     - binary
-  script: ['deb.sh']
+  script: ['bash deb.sh']
   stage: build-deb
