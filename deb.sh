@@ -5,8 +5,14 @@ tar xzf xbright.tar.gz
 mkdir xbright
 mv usr xbright/
 mkdir xbright/DEBIAN
-cat <<EOF | sudo tee xbright/DEBIAN/control
-# TODO
-EOF
+echo \
+'Package: xbright
+Version: 1.0-1
+Priority: optional
+Architecture: amd64
+Maintainer: Micah Parks <micahleviparks@gmail.com>
+Description: xbright
+ A simple brightness GUI for xrandr.' \
+> xbright/DEBIAN/control
 # Use dpkg to build and publish.
-
+dpkg-deb --build xbright/

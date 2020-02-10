@@ -8,7 +8,7 @@ build:binary:
   script: 'go build -o xbright *.go'
   stage: build
   artifacts:
-    expose_as: 'xbright'
+    expose_as: 'binary'
     name: "xbright"
     paths:
       - './xbright'
@@ -21,7 +21,7 @@ build:deb:
   script: ['deb.sh']
   stage: build
   artifacts:
-    expose_as: 'xbright.deb'
+    expose_as: 'deb'
     name: 'xbright.deb'
     paths: ['./xbright.deb']
     when: on_success
