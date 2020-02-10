@@ -1,6 +1,7 @@
 image: "golang"
 
 before_script:
+  - apt update && apt install libgl1-mesa-dev xorg-dev -y
   - go mod download
 
 gbuild:
