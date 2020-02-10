@@ -1,27 +1,31 @@
 image: "golang"
 
+stages:
+  - build-binary
+  - build-deb
+
 before_script:
   - 'apt update && apt install libgl1-mesa-dev xorg-dev -y'
   - 'go mod download'
 
-build:binary:
-  script: 'go build -o xbright *.go'
-  stage: build
+binary:
   artifacts:
     expose_as: 'binary'
     name: "xbright"
     paths:
       - './xbright'
     when: on_success
+  script: 'go build -o xbright *.go'
+  stage: build-binary
 
-build:deb:
-  before_script: ['go get fyne.io/fyne/cmd/fyne']
-  dependencies:
-    - build:binary
-  script: ['deb.sh']
-  stage: build
+deb:
   artifacts:
     expose_as: 'deb'
     name: 'xbright.deb'
-    paths: ['./xbright.deb']
+    paths: ['./xbright', './xbright.deb']
     when: on_success
+  before_script: ['go get fyne.io/fyne/cmd/fyne']
+  dependencies:
+    - binary
+  script: ['deb.sh']
+  stage: build-deb
