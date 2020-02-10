@@ -49,11 +49,6 @@ func main() {
 	}
 	defaultPath := u.HomeDir + "/.xbright.json"
 	a := app.New()
-	icon, err := fyne.LoadResourceFromPath("icon.png")
-	if err != nil {
-		l.Println("couldn't load icon")
-	}
-	a.SetIcon(icon)
 	w := a.NewWindow("xbright")
 	sliders, sCs := makeSliders(l, x)
 	s := settings{Path: defaultPath}
