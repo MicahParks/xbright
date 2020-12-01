@@ -1,4 +1,4 @@
-module gitlab.com/MicahParks/fbc
+module github.com/MicahParks/fbc
 
 go 1.13
 
